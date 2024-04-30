@@ -167,13 +167,13 @@ func GetScalingFilter() ScalingFilter {
 // method would be beneficial. Could also be ScalingMode.Project() or something, but
 // I don't like any in particular.
 
-// Transforms coordinates obtained from ebiten.CursorPosition() and
+// Transforms coordinates obtained from [ebiten.CursorPosition]() and
 // similar functions to relative coordinates between 0 and 1.
 func ToRelativeCoords(x, y int) (float64, float64) {
 	return pkgController.toRelativeCoords(x, y)
 }
 
-// Transforms coordinates obtained from ebiten.CursorPosition() and
+// Transforms coordinates obtained from [ebiten.CursorPosition]() and
 // similar functions to coordinates within the game's logical resolution.
 func ToLogicalCoords(x, y int) (int, int) {
 	return pkgController.toLogicalCoords(x, y)

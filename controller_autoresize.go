@@ -15,9 +15,10 @@ func setMaxMultRawWindowSize(width, height int, logicalMargin int) {
 }
 
 func findMaxMultRawWindowSize(width, height int, logicalMargin int) (int, int) {
-	scale := ebiten.DeviceScaleFactor()
-	fsWidth, fsHeight := ebiten.ScreenSizeInFullscreen()
-	if fsWidth <= 0 || fsHeight <= 0 { // fallback
+	monitor := ebiten.Monitor()
+	scale := monitor.DeviceScaleFactor()
+	fsWidth, fsHeight := monitor.Size()
+	if fsWidth <= 0 || fsHeight <= 0 { // fallback for mobile
 		fsWidth, fsHeight = 480, 480 // maybe even 640 should be fine
 	}
 	maxWidthMult  := (fsWidth  - logicalMargin)/width

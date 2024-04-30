@@ -1,5 +1,7 @@
 # lopix
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/tinne26/lopix.svg)](https://pkg.go.dev/github.com/tinne26/lopix)
+
 **(VERY WIP, VERY EARLY STAGES, VERY UNFINISHED)**
 
 A package to assist the development of simple [Ebitengine](https://ebitengine.org) pixel art games.

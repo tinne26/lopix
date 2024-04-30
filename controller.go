@@ -1,6 +1,7 @@
 package lopix
 
 import "image"
+import "math"
 
 import "github.com/hajimehoshi/ebiten/v2"
 
@@ -64,15 +65,18 @@ func (self *controller) Draw(hiResCanvas *ebiten.Image) {
 }
 
 func (self *controller) Layout(logicWinWidth, logicWinHeight int) (int, int) {
-	scale := ebiten.DeviceScaleFactor()
+	monitor := ebiten.Monitor()
+	scale := monitor.DeviceScaleFactor()
 	self.hiResWidth  = int(float64(logicWinWidth)*scale)
 	self.hiResHeight = int(float64(logicWinHeight)*scale)
 	return self.hiResWidth, self.hiResHeight
 }
 
 func (self *controller) LayoutF(logicWinWidth, logicWinHeight float64) (float64, float64) {
-	scale := ebiten.DeviceScaleFactor()
-	outWidth, outHeight := logicWinWidth*scale, logicWinHeight*scale
+	monitor := ebiten.Monitor()
+	scale := monitor.DeviceScaleFactor()
+	outWidth  := math.Ceil(logicWinWidth*scale)
+	outHeight := math.Ceil(logicWinHeight*scale)
 	self.hiResWidth, self.hiResHeight = int(outWidth), int(outHeight)
 	return outWidth, outHeight
 }
