@@ -84,16 +84,56 @@ func QueueDraw(callback func(*ebiten.Image)) {
 	pkgController.queueLogicalDraw(callback)
 }
 
-// Notifies that the draw function is not drawing anything.
-// Consequently, this package will skips the next projection
-// from the logical canvas to the screen canvas, reusing the
-// previous canvas instead. This can be used to reduce GPU
-// usage during idle parts of the game.
+// In some games and applications it's possible to spare
+// GPU by using [ebiten.SetScreenClearedEveryFrame](false)
+// and omitting redundant draw calls.
 //
-// This function is expected to be called from the Game.Draw()
-// handler itself.
-func NotifyDrawSkip() {
-	pkgController.notifyDrawSkip()
+// The redraw manager allows you to synchronize this
+// process with lopix itself, as there are some projections
+// that would otherwise fall outside your control.
+//
+// By default, redraws are executed on every frame. If you
+// want to manage them more efficiently, you can do the
+// following:
+//  - Make sure to disable ebitengine's screen clear.
+//  - Opt into managed redraws with [RedrawManager.SetManaged](true).
+//  - Whenever a redraw becomes necessary, issue a
+//    [RedrawManager.Request]().
+//  - On Game.Draw(), if ![RedrawManager.Pending](), skip the draw.
+type RedrawManager controller
+
+// See [RedrawManager].
+func Redraw() *RedrawManager {
+	return (*RedrawManager)(&pkgController)
+}
+
+// Enables or disables manual redraw management. By default,
+// redraw management is disabled and the screen is redrawn
+// every frame.
+func (self *RedrawManager) SetManaged(managed bool) {
+	pkgController.redrawSetManaged(managed)
+}
+
+// Returns whether manual redraw management is enabled or not.
+func (self *RedrawManager) IsManaged() bool {
+	return pkgController.redrawIsManaged()
+}
+
+// Notifies lopix that the next Game.Draw() needs to be
+// projected on the screen. Requests are typically issued
+// during Game.Update() when relevant input or events are
+// detected.
+//
+// This function can be called multiple times, it's only
+// setting an internal flag equivalent to "needs redraw".
+func (self *RedrawManager) Request() {
+	pkgController.redrawRequest()
+}
+
+// Returns whether a redraw has been requested and is
+// still pending.
+func (self *RedrawManager) Pending() bool {
+	return pkgController.redrawPending()
 }
 
 // Scaling modes can be changed through [SetScalingMode]().

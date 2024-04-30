@@ -16,7 +16,9 @@ type controller struct {
 	logicalHeight int
 	hiResWidth  int
 	hiResHeight int
-	skipDraw bool
+	
+	needsRedraw bool
+	redrawManaged bool
 
 	rawLogicalCanvas *ebiten.Image
 	logicalCanvas *ebiten.Image
@@ -55,10 +57,10 @@ func (self *controller) Draw(hiResCanvas *ebiten.Image) {
 	self.queuedDraws = self.queuedDraws[ : 0]
 
 	// final projection
-	if !prevDrawWasHiRes && !self.skipDraw {
+	if !prevDrawWasHiRes && (!self.redrawManaged || self.needsRedraw) {
 		self.project(hiResCanvas)
+		self.needsRedraw = false
 	}
-	self.skipDraw = false
 
 	// respect ebiten.IsScreenClearedEveryFrame()
 	if ebiten.IsScreenClearedEveryFrame() {
@@ -127,6 +129,18 @@ func (self *controller) queueHiResDraw(callback func(*ebiten.Image)) {
 	self.queuedDraws = append(self.queuedDraws, queuedDraw{ callback, true })
 }
 
-func (self *controller) notifyDrawSkip() {
-	self.skipDraw = true
+func (self *controller) redrawSetManaged(managed bool) {
+	self.redrawManaged = managed
+}
+
+func (self *controller) redrawIsManaged() bool {
+	return self.redrawManaged
+}
+
+func (self *controller) redrawRequest() {
+	self.needsRedraw = true
+}
+
+func (self *controller) redrawPending() bool {
+	return self.needsRedraw
 }
