@@ -16,6 +16,7 @@ type controller struct {
 	logicalHeight int
 	hiResWidth  int
 	hiResHeight int
+	skipDraw bool
 
 	rawLogicalCanvas *ebiten.Image
 	logicalCanvas *ebiten.Image
@@ -54,9 +55,10 @@ func (self *controller) Draw(hiResCanvas *ebiten.Image) {
 	self.queuedDraws = self.queuedDraws[ : 0]
 
 	// final projection
-	if !prevDrawWasHiRes {
+	if !prevDrawWasHiRes && !self.skipDraw {
 		self.project(hiResCanvas)
 	}
+	self.skipDraw = false
 
 	// respect ebiten.IsScreenClearedEveryFrame()
 	if ebiten.IsScreenClearedEveryFrame() {
@@ -118,10 +120,13 @@ func (self *controller) getScalingFilter() ScalingFilter {
 }
 
 func (self *controller) queueLogicalDraw(callback func(*ebiten.Image)) {
-
+	self.queuedDraws = append(self.queuedDraws, queuedDraw{ callback, false })
 }
 
 func (self *controller) queueHiResDraw(callback func(*ebiten.Image)) {
-
+	self.queuedDraws = append(self.queuedDraws, queuedDraw{ callback, true })
 }
 
+func (self *controller) notifyDrawSkip() {
+	self.skipDraw = true
+}

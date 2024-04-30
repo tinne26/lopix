@@ -84,6 +84,18 @@ func QueueDraw(callback func(*ebiten.Image)) {
 	pkgController.queueLogicalDraw(callback)
 }
 
+// Notifies that the draw function is not drawing anything.
+// Consequently, this package will skips the next projection
+// from the logical canvas to the screen canvas, reusing the
+// previous canvas instead. This can be used to reduce GPU
+// usage during idle parts of the game.
+//
+// This function is expected to be called from the Game.Draw()
+// handler itself.
+func NotifyDrawSkip() {
+	pkgController.notifyDrawSkip()
+}
+
 // Scaling modes can be changed through [SetScalingMode]().
 //
 // Letting the player change these through the game options
