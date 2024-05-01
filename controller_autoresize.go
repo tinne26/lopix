@@ -6,7 +6,7 @@ func (self *controller) autoResizeWindow() {
 	if self.logicalWidth < 1 || self.logicalHeight < 1 {
 		panic("can't auto-resize before setting the game resolution")
 	}
-	setMaxMultRawWindowSize(self.logicalWidth, self.logicalHeight, 128)
+	setMaxMultRawWindowSize(self.logicalWidth, self.logicalHeight, 96)
 }
 
 func setMaxMultRawWindowSize(width, height int, logicalMargin int) {
@@ -17,6 +17,7 @@ func setMaxMultRawWindowSize(width, height int, logicalMargin int) {
 func findMaxMultRawWindowSize(width, height int, logicalMargin int) (int, int) {
 	monitor := ebiten.Monitor()
 	scale := monitor.DeviceScaleFactor()
+	logicalMargin = int(float64(logicalMargin)*scale)
 	fsWidth, fsHeight := monitor.Size()
 	if fsWidth <= 0 || fsHeight <= 0 { // fallback for mobile
 		fsWidth, fsHeight = 480, 480 // maybe even 640 should be fine

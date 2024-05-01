@@ -27,8 +27,8 @@ func Run(game Game) error {
 	return ebiten.RunGame(&pkgController)
 }
 
-// Sets the windowed size to a reasonable, pixel-perfect value
-// that will usually take most of the window, but not all of it.
+// Sets the windowed size to a reasonably visible but still
+// pixel-perfect value.
 //
 // If the game is currently fullscreened, it will remain
 // fullscreened, but the windowed size will still be updated.
@@ -44,6 +44,8 @@ func AutoResizeWindow() {
 // concern for the kind of games lopix tries to support.
 //
 // See also [GetResolution]().
+//
+// Must only be called during initialization or Game.Update().
 func SetResolution(width, height int) {
 	pkgController.setResolution(width, height)
 }
@@ -67,6 +69,9 @@ func GetResolution() (width, height int) {
 //
 // This method can only be invoked during the draw stage.
 // Multiple draws might be queued. See also [QueueDraw]().
+//
+// Must only be called from Game.Draw() or successive
+// draw callbacks.
 func QueueHiResDraw(callback func(*ebiten.Image)) {
 	pkgController.queueHiResDraw(callback)
 }
@@ -80,6 +85,9 @@ func QueueHiResDraw(callback func(*ebiten.Image)) {
 // Notice that the canvas passed to the callback will be
 // preemptive cleared if the previous draw was a high
 // resolution draw.
+//
+// Must only be called from Game.Draw() or successive
+// draw callbacks.
 func QueueDraw(callback func(*ebiten.Image)) {
 	pkgController.queueLogicalDraw(callback)
 }
@@ -110,6 +118,8 @@ func Redraw() *RedrawManager {
 // Enables or disables manual redraw management. By default,
 // redraw management is disabled and the screen is redrawn
 // every frame.
+//
+// Must only be called during initialization or Game.Update().
 func (self *RedrawManager) SetManaged(managed bool) {
 	pkgController.redrawSetManaged(managed)
 }
@@ -121,8 +131,8 @@ func (self *RedrawManager) IsManaged() bool {
 
 // Notifies lopix that the next Game.Draw() needs to be
 // projected on the screen. Requests are typically issued
-// during Game.Update() when relevant input or events are
-// detected.
+// when relevant input or events are detected during
+// Game.Update().
 //
 // This function can be called multiple times, it's only
 // setting an internal flag equivalent to "needs redraw".
@@ -130,8 +140,10 @@ func (self *RedrawManager) Request() {
 	pkgController.redrawRequest()
 }
 
-// Returns whether a redraw has been requested and is
-// still pending.
+// Returns whether a redraw is still pending. Notice that
+// besides explicit requests, a redraw can also be pending
+// due to a canvas resize, the modification of the scaling
+// properties, etc.
 func (self *RedrawManager) Pending() bool {
 	return pkgController.redrawPending()
 }
@@ -178,6 +190,8 @@ func (self ScalingMode) Next() ScalingMode {
 }
 
 // Changes the scaling mode. The default is [Proportional].
+//
+// Must only be called during initialization or Game.Update().
 func SetScalingMode(mode ScalingMode) {
 	pkgController.setScalingMode(mode)
 }
@@ -206,6 +220,8 @@ const (
 )
 
 // Changes the scaling filter. The default is [Derivative].
+//
+// Must only be called during initialization or Game.Update().
 func SetScalingFilter(filter ScalingFilter) {
 	pkgController.setScalingFilter(filter)
 }
