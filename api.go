@@ -1,5 +1,7 @@
 package lopix
 
+import "image"
+
 import "github.com/hajimehoshi/ebiten/v2"
 
 // Similar to [ebiten.Game], but without the Layout() method:
@@ -76,6 +78,17 @@ func QueueHiResDraw(callback func(*ebiten.Image)) {
 	pkgController.queueHiResDraw(callback)
 }
 
+// While drawing in high resolution, sometimes not the whole
+// canvas is used due to aspect ratio mismatches. This function
+// returns the active area for the high resolution canvas.
+//
+// Notice that [QueueHiResDraw]() callbacks receive the full
+// resolution canvas in case you want to fill the black margins
+// yourself.
+func HiResActiveArea() image.Rectangle {
+	return pkgController.hiResActiveArea()	
+}
+
 // See [QueueHiResDraw](). If you need to interleave high
 // resolution and logically rendered layers, you might need
 // to make use of use this function. If you aren't using
@@ -148,6 +161,12 @@ func (self *RedrawManager) Pending() bool {
 	return pkgController.redrawPending()
 }
 
+// Signal the redraw manager to clear both the logical screen
+// and the high resolution canvas before the next Game.Draw().
+func (self *RedrawManager) ScheduleClear() {
+	pkgController.redrawScheduleClear()
+}
+
 // Scaling modes can be changed through [SetScalingMode]().
 //
 // Letting the player change these through the game options
@@ -178,17 +197,6 @@ func (self ScalingMode) String() string {
 	}
 }
 
-// Utility method to get the next scaling mode constant.
-func (self ScalingMode) Next() ScalingMode {
-	switch self {
-	case Proportional : return PixelPerfect
-	case PixelPerfect : return Stretched
-	case Stretched    : return Proportional
-	default:
-		panic("invalid ScalingMode")
-	}
-}
-
 // Changes the scaling mode. The default is [Proportional].
 //
 // Must only be called during initialization or Game.Update().
@@ -208,20 +216,49 @@ func GetScalingMode() ScalingMode {
 // as comparison points for the dev, but they should not be
 // exposed as configurable settings for the player.
 //
-// In some very specific cases, [Nearest] or [Bilinear] might
+// In some very specific cases, [Nearest] or [Bicubic] might
 // be preferred over the default algorithm, but this would
 // be more of an aesthetic choice than anything else.
 type ScalingFilter uint8
 const (
 	Derivative ScalingFilter = iota 
-	Nearest 
-	Linear
+	Nearest
+	Hermite
+	Bicubic
 	Bilinear
+	SrcDerivative
+	SrcHermite
+	SrcBicubic
+	SrcBilinear
+	scalingFilterEndSentinel
 )
+
+func (self ScalingFilter) String() string {
+	switch self {
+	case Derivative    : return "Derivative"
+	case Nearest 	    : return "Nearest"
+	case Hermite 	    : return "Hermite"
+	case Bicubic 	    : return "Bicubic"
+	case Bilinear	    : return "Bilinear"
+	case SrcDerivative : return "SrcDerivative"
+	case SrcHermite    : return "SrcHermite"
+	case SrcBicubic    : return "SrcBicubic"
+	case SrcBilinear   : return "SrcBilinear"
+	default:
+		panic("invalid ScalingFilter")
+	}
+}
 
 // Changes the scaling filter. The default is [Derivative].
 //
 // Must only be called during initialization or Game.Update().
+//
+// The first time you set the [Derivative] or the [Bicubic]
+// filters explicitly, their shaders will also be compiled.
+// This means that this function can be effectively used to
+// precompile the relevant shaders. Otherwise, the shader
+// will be recompiled the first time it's actually needed
+// in order to draw.
 func SetScalingFilter(filter ScalingFilter) {
 	pkgController.setScalingFilter(filter)
 }

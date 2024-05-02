@@ -1,0 +1,40 @@
+//kage:unit pixels
+package main
+
+// uniforms
+var OutWidth  float
+var OutHeight float
+
+func Fragment(_ vec4, sourceCoords vec2, _ vec4) vec4 {
+	minCoords, maxCoords := getMinMaxSourceCoords()
+	percent := imageSrc0Size()/vec2(OutWidth, OutHeight)
+	halfPercentY := percent.y/2.0
+	oneHalfPercY := percent.y + halfPercentY
+	a := cubicRow(sourceCoords - vec2(0, oneHalfPercY), minCoords, maxCoords, percent.x)
+	b := cubicRow(sourceCoords - vec2(0, halfPercentY), minCoords, maxCoords, percent.x)
+	c := cubicRow(sourceCoords + vec2(0, halfPercentY), minCoords, maxCoords, percent.x)
+	d := cubicRow(sourceCoords + vec2(0, oneHalfPercY), minCoords, maxCoords, percent.x)
+	delta := min(fract(sourceCoords.y + halfPercentY), percent.y)/percent.y
+	return cubicInterp(delta, a, b, c, d)
+}
+
+func cubicRow(coords vec2, minCoords, maxCoords vec2, percentX float) vec4 {
+	halfPercentX := percentX/2.0
+	oneHalfPercX := percentX + halfPercentX
+	a := imageSrc0At(clamp(coords - vec2(oneHalfPercX, 0), minCoords, maxCoords))
+	b := imageSrc0At(clamp(coords - vec2(halfPercentX, 0), minCoords, maxCoords))
+	c := imageSrc0At(clamp(coords + vec2(halfPercentX, 0), minCoords, maxCoords))
+	d := imageSrc0At(clamp(coords + vec2(oneHalfPercX, 0), minCoords, maxCoords))
+	delta := min(fract(coords.x + halfPercentX), percentX)/percentX
+	return cubicInterp(delta, a, b, c, d)
+}
+
+func cubicInterp(x float, a, b, c, d vec4) vec4 {
+	return (-0.5*a + 1.5*b - 1.5*c + 0.5*d)*(x*x*x) + (a - 2.5*b + 2.0*c - 0.5*d)*(x*x) + (-0.5*a + 0.5*c)*x + b
+}
+
+func getMinMaxSourceCoords() (vec2, vec2) {
+	const epsilon = 1.0/65536.0 // TODO: determine how small can we safely set this
+	origin := imageSrc0Origin()
+	return origin, origin + imageSrc0Size() - vec2(epsilon)
+}

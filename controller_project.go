@@ -4,55 +4,24 @@ import "math"
 
 import "github.com/hajimehoshi/ebiten/v2"
 
+var pkgShaderIndices = []uint16{0, 1, 3, 3, 1, 2}
 func (self *controller) project(hiResCanvas *ebiten.Image) {
 	// TODO: could check that hiResCanvas bounds match self.hiResWidth
-	//       and self.hiResHeight, but any measures in that case might
+	//       and self.hiResHeight, but any actions in that case might
 	//       do more harm than good (one frame desync is likeliest)
-	switch self.scalingMode {
-	case Proportional:
-		self.projectProportional(hiResCanvas)
-	case PixelPerfect:
-		panic("unimplemented") // skip filter or not here? well, skip unless factors < 1.0
-	case Stretched:
-		panic("unimplemented")
-	default:
-		panic("invalid scaling mode")
+
+	if self.shaders[self.internalScalingFilter] == nil {
+		self.compileShader(self.internalScalingFilter)
 	}
+	hiResCanvas.DrawTrianglesShader(
+		self.shaderVertices[:],
+		pkgShaderIndices,
+		self.shaders[self.internalScalingFilter],
+		&self.shaderOpts,
+	)
 }
 
-func floatImgSize(image *ebiten.Image) (float64, float64) {
-	w, h := intImgSize(image)
-	return float64(w), float64(h)
-}
-
-func intImgSize(image *ebiten.Image) (int, int) {
-	if image == nil { return 0, 0 }
-	bounds := image.Bounds()
-	return bounds.Dx(), bounds.Dy()
-}
-
-func (self *controller) projectProportional(hiResCanvas *ebiten.Image) {
-	factor := self.getProportionalScaleFactor()
-	
-	// pixel perfect case, no filter needed
-	if factor == float64(int(factor)) {
-		self.nearestDrawWithFactor(hiResCanvas, factor)
-		return
-	}
-
-	switch self.scalingFilter {
-	case Derivative:
-		panic("unimplemented")
-	case Bilinear:
-		panic("unimplemented")
-	case Nearest:
-		self.nearestDrawWithFactor(hiResCanvas, factor)
-	case Linear:
-		self.linearDrawWithFactor(hiResCanvas, factor)
-	default:
-		panic("invalid scaling filter")
-	}
-}
+// --- get scale factors for each scaling mode ---
 
 func (self *controller) getProportionalScaleFactor() float64 {
 	ofw, ofh := float64(self.hiResWidth), float64(self.hiResHeight)
@@ -69,43 +38,33 @@ func (self *controller) getPixelPerfectScaleFactor() float64 {
 	return perfectFactor
 }
 
-func (self *controller) getStretchedFactors() (float64, float64) {
+func (self *controller) getStretchedScaleFactors() (float64, float64) {
 	ofw, ofh := float64(self.hiResWidth), float64(self.hiResHeight)
 	ifw, ifh := float64(self.logicalWidth), float64(self.logicalHeight)
 	return ofw/ifw, ofh/ifh
 }
 
-func (self *controller) nearestDrawWithFactor(hiResCanvas *ebiten.Image, factor float64) {
-	self.opts.GeoM.Scale(factor, factor)
-	self.opts.GeoM.Translate(self.xMargin, self.yMargin)
-	hiResCanvas.DrawImage(self.logicalCanvas, &self.opts)
-	self.opts.GeoM.Reset()
-}
+// --- shader properties setup ---
 
-func (self *controller) linearDrawWithFactor(hiResCanvas *ebiten.Image, factor float64) {
-	self.opts.Filter = ebiten.FilterLinear
-	self.opts.GeoM.Scale(factor, factor)
-	self.opts.GeoM.Translate(self.xMargin, self.yMargin)
-	hiResCanvas.DrawImage(self.logicalCanvas, &self.opts)
-	self.opts.GeoM.Reset()
-	self.opts.Filter = ebiten.FilterNearest
-}
-
-func (self *controller) refreshMargins() {
-	var xFactor, yFactor float64
-	switch self.scalingMode {
-	case Proportional:
-		xFactor = self.getProportionalScaleFactor()
-		yFactor = xFactor
-	case PixelPerfect:
-		xFactor = self.getPixelPerfectScaleFactor()
-		yFactor = xFactor
-	case Stretched:
-		xFactor, yFactor = self.getStretchedFactors()
-	default:
-		panic("invalid scaling mode")
+func (self *controller) compileShader(filter ScalingFilter) {
+	var err error
+	self.shaders[filter], err = ebiten.NewShader(pkgSrcKageFilters[filter])
+	if err != nil {
+		panic("Failed to compile shader for filter '" + filter.String() + "':\n" + err.Error())
 	}
+	if self.shaderOpts.Uniforms == nil {
+		self.initShaderProperties()
+	}
+}
 
-	self.xMargin = (float64(self.hiResWidth ) - float64(self.logicalWidth )*xFactor)/2.0
-	self.yMargin = (float64(self.hiResHeight) - float64(self.logicalHeight)*yFactor)/2.0
+func (self *controller) initShaderProperties() {
+	self.shaderOpts.Uniforms = make(map[string]any, 2)
+	self.shaderOpts.Uniforms["OutWidth"]  = float32(self.hiResWidth ) - float32(self.xMargin*2)
+	self.shaderOpts.Uniforms["OutHeight"] = float32(self.hiResHeight) - float32(self.yMargin*2)
+	for i := range 4 {
+		self.shaderVertices[i].ColorR = 1.0
+		self.shaderVertices[i].ColorG = 1.0
+		self.shaderVertices[i].ColorB = 1.0
+		self.shaderVertices[i].ColorA = 1.0
+	}
 }

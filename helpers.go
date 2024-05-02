@@ -6,6 +6,7 @@ import "image/color"
 import "github.com/hajimehoshi/ebiten/v2"
 
 var pkgReusableVertices []ebiten.Vertex
+var pkgReusableTrianglesOptions ebiten.DrawTrianglesOptions
 var pkgMiniMask *ebiten.Image
 func init() {
 	pkgReusableVertices = make([]ebiten.Vertex, 4)
@@ -28,11 +29,11 @@ func DrawRect(target *ebiten.Image, rect image.Rectangle, rgba color.RGBA) {
 
 	pkgReusableVertices[0].DstX = float32(bounds.Min.X) // top left
 	pkgReusableVertices[0].DstY = float32(bounds.Min.Y)
-	pkgReusableVertices[1].DstX = float32(bounds.Min.X) // bottom left
-	pkgReusableVertices[1].DstY = float32(bounds.Max.Y)
-	pkgReusableVertices[2].DstX = float32(bounds.Max.X) // top right
-	pkgReusableVertices[2].DstY = float32(bounds.Min.Y)
-	pkgReusableVertices[3].DstX = float32(bounds.Max.X) // bottom right
+	pkgReusableVertices[1].DstX = float32(bounds.Max.X) // top right
+	pkgReusableVertices[1].DstY = float32(bounds.Min.Y)
+	pkgReusableVertices[2].DstX = float32(bounds.Max.X) // bottom right
+	pkgReusableVertices[2].DstY = float32(bounds.Max.Y)
+	pkgReusableVertices[3].DstX = float32(bounds.Min.X) // bottom left
 	pkgReusableVertices[3].DstY = float32(bounds.Max.Y)
 	for i := 0; i < 4; i++ {
 		pkgReusableVertices[i].SrcX = 1.0
@@ -42,5 +43,5 @@ func DrawRect(target *ebiten.Image, rect image.Rectangle, rgba color.RGBA) {
 		pkgReusableVertices[i].ColorB = fb
 		pkgReusableVertices[i].ColorA = fa
 	}	
-	target.DrawTriangles(pkgReusableVertices, []uint16{0, 2, 1, 1, 2, 3}, pkgMiniMask, nil)
+	target.DrawTriangles(pkgReusableVertices, pkgShaderIndices, pkgMiniMask, &pkgReusableTrianglesOptions)
 }
