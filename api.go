@@ -60,6 +60,13 @@ func GetResolution() (width, height int) {
 	return pkgController.getResolution()
 }
 
+// Utility function, equivalent to obtaining the resolution
+// and returning a rectangle of that size with (0, 0) origin.
+func GetLogicalBounds() image.Rectangle {
+	w, h := pkgController.getResolution()
+	return image.Rect(0, 0, w, h)
+}
+
 // Queues the given callback function to be invoked after
 // the current draw function and any other queued draws
 // finish.

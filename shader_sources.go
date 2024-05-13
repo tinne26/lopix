@@ -4,31 +4,31 @@ import _ "embed"
 
 // TODO: consider using quasilyte's minifier and paste code directly
 
-//go:embed filter_nearest.kage
+//go:embed filters/nearest.kage
 var _nearest []byte
 
-//go:embed filter_derivative.kage
+//go:embed filters/derivative.kage
 var _derivative []byte
 
-//go:embed filter_hermite.kage
+//go:embed filters/hermite.kage
 var _hermite []byte
 
-//go:embed filter_bicubic.kage
+//go:embed filters/bicubic.kage
 var _bicubic []byte
 
-//go:embed filter_bilinear.kage
+//go:embed filters/bilinear.kage
 var _bilinear []byte
 
-//go:embed filter_src_derivative.kage
+//go:embed filters/src_derivative.kage
 var _srcDerivative []byte
 
-//go:embed filter_src_hermite.kage
+//go:embed filters/src_hermite.kage
 var _srcHermite []byte
 
-//go:embed filter_src_bicubic.kage
+//go:embed filters/src_bicubic.kage
 var _srcBicubic []byte
 
-//go:embed filter_src_bilinear.kage
+//go:embed filters/src_bilinear.kage
 var _srcBilinear []byte
 
 var pkgSrcKageFilters [scalingFilterEndSentinel][]byte
