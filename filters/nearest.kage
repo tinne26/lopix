@@ -2,5 +2,5 @@
 package main
 
 func Fragment(_ vec4, sourceCoords vec2, _ vec4) vec4 {
-	return imageSrc0At(sourceCoords)
+	return imageSrc0UnsafeAt(sourceCoords)
 }

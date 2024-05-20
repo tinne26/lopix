@@ -246,8 +246,8 @@ func (self *controller) notifyCanvasChange() {
 
 	self.shaderOpts.Images[0] = self.logicalCanvas
 	if self.shaderOpts.Uniforms != nil {
-		self.shaderOpts.Uniforms["OutWidth"]  = float32(self.hiResWidth ) - float32(self.xMargin*2)
-		self.shaderOpts.Uniforms["OutHeight"] = float32(self.hiResHeight) - float32(self.yMargin*2)
+		self.shaderOpts.Uniforms["SourceRelativeTextureUnitX"] = float32(self.logicalWidth)/(float32(self.hiResWidth ) - float32(self.xMargin*2))
+		self.shaderOpts.Uniforms["SourceRelativeTextureUnitY"] = float32(self.logicalHeight)/(float32(self.hiResHeight) - float32(self.yMargin*2))
 	}
 
 	// set shader vertex positions, clockwise order, starting at top left

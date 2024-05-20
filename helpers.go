@@ -20,7 +20,7 @@ func DrawPixel(target *ebiten.Image, x, y int, rgba color.RGBA) {
 	DrawRect(target, image.Rect(x, y, x + 1, y + 1), rgba)
 }
 
-// Helper function to draw filled rectangles. Unlike ebiten.Image.Fill(),
+// Helper function to draw filled rectangles. Unlike [ebiten.Image.Fill](),
 // it doesn't replace the contents of the rect area, it draws over it.
 func DrawRect(target *ebiten.Image, rect image.Rectangle, rgba color.RGBA) {
 	bounds := rect.Bounds()

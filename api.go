@@ -47,7 +47,7 @@ func AutoResizeWindow() {
 //
 // See also [GetResolution]().
 //
-// Must only be called during initialization or Game.Update().
+// Must only be called during initialization or [Game].Update().
 func SetResolution(width, height int) {
 	pkgController.setResolution(width, height)
 }
@@ -55,7 +55,7 @@ func SetResolution(width, height int) {
 // Returns the last pair of values passed to [SetResolution]().
 //
 // With lopix, the game resolution and the size of the canvas
-// passed to Game.Draw() are always the same.
+// passed to [Game].Draw() are always the same.
 func GetResolution() (width, height int) {
 	return pkgController.getResolution()
 }
@@ -79,7 +79,7 @@ func GetLogicalBounds() image.Rectangle {
 // This method can only be invoked during the draw stage.
 // Multiple draws might be queued. See also [QueueDraw]().
 //
-// Must only be called from Game.Draw() or successive
+// Must only be called from [Game].Draw() or successive
 // draw callbacks.
 func QueueHiResDraw(callback func(*ebiten.Image)) {
 	pkgController.queueHiResDraw(callback)
@@ -103,10 +103,10 @@ func HiResActiveArea() image.Rectangle {
 // this function.
 //
 // Notice that the canvas passed to the callback will be
-// preemptive cleared if the previous draw was a high
+// preemptively cleared if the previous draw was a high
 // resolution draw.
 //
-// Must only be called from Game.Draw() or successive
+// Must only be called from [Game].Draw() or successive
 // draw callbacks.
 func QueueDraw(callback func(*ebiten.Image)) {
 	pkgController.queueLogicalDraw(callback)
@@ -127,7 +127,7 @@ func QueueDraw(callback func(*ebiten.Image)) {
 //  - Opt into managed redraws with [RedrawManager.SetManaged](true).
 //  - Whenever a redraw becomes necessary, issue a
 //    [RedrawManager.Request]().
-//  - On Game.Draw(), if ![RedrawManager.Pending](), skip the draw.
+//  - On [Game].Draw(), if ![RedrawManager.Pending](), skip the draw.
 type RedrawManager controller
 
 // See [RedrawManager].
@@ -139,7 +139,7 @@ func Redraw() *RedrawManager {
 // redraw management is disabled and the screen is redrawn
 // every frame.
 //
-// Must only be called during initialization or Game.Update().
+// Must only be called during initialization or [Game].Update().
 func (self *RedrawManager) SetManaged(managed bool) {
 	pkgController.redrawSetManaged(managed)
 }
@@ -149,13 +149,14 @@ func (self *RedrawManager) IsManaged() bool {
 	return pkgController.redrawIsManaged()
 }
 
-// Notifies lopix that the next Game.Draw() needs to be
+// Notifies lopix that the next [Game].Draw() needs to be
 // projected on the screen. Requests are typically issued
 // when relevant input or events are detected during
-// Game.Update().
+// [Game].Update().
 //
-// This function can be called multiple times, it's only
-// setting an internal flag equivalent to "needs redraw".
+// This function can be called multiple times within a single
+// update without issue, it's only setting an internal flag
+// equivalent to "needs redraw".
 func (self *RedrawManager) Request() {
 	pkgController.redrawRequest()
 }
@@ -169,7 +170,7 @@ func (self *RedrawManager) Pending() bool {
 }
 
 // Signal the redraw manager to clear both the logical screen
-// and the high resolution canvas before the next Game.Draw().
+// and the high resolution canvas before the next [Game].Draw().
 func (self *RedrawManager) ScheduleClear() {
 	pkgController.redrawScheduleClear()
 }
@@ -206,7 +207,7 @@ func (self ScalingMode) String() string {
 
 // Changes the scaling mode. The default is [Proportional].
 //
-// Must only be called during initialization or Game.Update().
+// Must only be called during initialization or [Game].Update().
 func SetScalingMode(mode ScalingMode) {
 	pkgController.setScalingMode(mode)
 }
@@ -218,59 +219,57 @@ func GetScalingMode() ScalingMode {
 
 // Scaling filters can be changed through [SetScalingFilter]().
 //
-// The default [Derivative] scaling filter is pretty much the
-// only reason to use this package. Other filters can serve
-// as comparison points for the dev, but they should not be
-// exposed as configurable settings for the player.
+// Many filters are only provided as comparison points, not
+// because they necessarily offer great results. For the purposes
+// of this package, I'd generally recommend the AASampling*
+// or the [Hermite] filters.
 //
-// In some very specific cases, [Nearest] or [Bicubic] might
-// be preferred over the default algorithm, but this would
-// be more of an aesthetic choice than anything else.
+// In some very specific cases, [Nearest] might also be useful.
 type ScalingFilter uint8
 const (
-	Derivative ScalingFilter = iota 
+	Hermite ScalingFilter = iota
+	AASamplingSoft
+	AASamplingSharp
 	Nearest
-	Hermite
 	Bicubic
 	Bilinear
-	SrcDerivative
 	SrcHermite
 	SrcBicubic
 	SrcBilinear
 	scalingFilterEndSentinel
 )
 
+// Returns a string representation of the scaling filter.
 func (self ScalingFilter) String() string {
 	switch self {
-	case Derivative    : return "Derivative"
-	case Nearest 	    : return "Nearest"
-	case Hermite 	    : return "Hermite"
-	case Bicubic 	    : return "Bicubic"
-	case Bilinear	    : return "Bilinear"
-	case SrcDerivative : return "SrcDerivative"
-	case SrcHermite    : return "SrcHermite"
-	case SrcBicubic    : return "SrcBicubic"
-	case SrcBilinear   : return "SrcBilinear"
+	case AASamplingSoft  : return "AASamplingSoft"
+	case AASamplingSharp : return "AASamplingSharp"
+	case Nearest         : return "Nearest"
+	case Hermite         : return "Hermite"
+	case Bicubic         : return "Bicubic"
+	case Bilinear        : return "Bilinear"
+	case SrcHermite      : return "SrcHermite"
+	case SrcBicubic      : return "SrcBicubic"
+	case SrcBilinear     : return "SrcBilinear"
 	default:
 		panic("invalid ScalingFilter")
 	}
 }
 
-// Changes the scaling filter. The default is [Derivative].
+// Changes the scaling filter. The default is [Hermite].
 //
-// Must only be called during initialization or Game.Update().
+// Must only be called during initialization or [Game].Update().
 //
-// The first time you set the [Derivative] or the [Bicubic]
-// filters explicitly, their shaders will also be compiled.
-// This means that this function can be effectively used to
-// precompile the relevant shaders. Otherwise, the shader
-// will be recompiled the first time it's actually needed
-// in order to draw.
+// The first time you set a filter explicitly, its shader is
+// also compiled. This means that this function can be effectively
+// used to precompile the relevant shaders. Otherwise, the shader
+// will be recompiled the first time it's actually needed in order
+// to draw.
 func SetScalingFilter(filter ScalingFilter) {
 	pkgController.setScalingFilter(filter)
 }
 
-// Returns the current scaling filter. The default is [Derivative].
+// Returns the current scaling filter. The default is [Hermite].
 func GetScalingFilter() ScalingFilter {
 	return pkgController.getScalingFilter()
 }
@@ -281,6 +280,9 @@ func GetScalingFilter() ScalingFilter {
 
 // Transforms coordinates obtained from [ebiten.CursorPosition]() and
 // similar functions to relative coordinates between 0 and 1.
+//
+// If the coordinates fall outside the active canvas they will be clamped
+// to the closest point inside it, returning 0 or 1 for any clamped axis.
 func ToRelativeCoords(x, y int) (float64, float64) {
 	return pkgController.toRelativeCoords(x, y)
 }

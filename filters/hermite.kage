@@ -1,18 +1,17 @@
 //kage:unit pixels
 package main
 
-// uniforms
-var OutWidth  float
-var OutHeight float
+var SourceRelativeTextureUnitX float
+var SourceRelativeTextureUnitY float
 
 func Fragment(_ vec4, sourceCoords vec2, _ vec4) vec4 {
-	percent := imageSrc0Size()/vec2(OutWidth, OutHeight)
+	percent := vec2(SourceRelativeTextureUnitX, SourceRelativeTextureUnitY)
 	halfPercent := percent/2.0
 	minCoords, maxCoords := getMinMaxSourceCoords()
-	tl := imageSrc0At(clamp(sourceCoords + vec2(-halfPercent.x, -halfPercent.y), minCoords, maxCoords))
-	tr := imageSrc0At(clamp(sourceCoords + vec2(+halfPercent.x, -halfPercent.y), minCoords, maxCoords))
-	bl := imageSrc0At(clamp(sourceCoords + vec2(-halfPercent.x, +halfPercent.y), minCoords, maxCoords))
-	br := imageSrc0At(clamp(sourceCoords + vec2(+halfPercent.x, +halfPercent.y), minCoords, maxCoords))
+	tl := imageSrc0UnsafeAt(clamp(sourceCoords + vec2(-halfPercent.x, -halfPercent.y), minCoords, maxCoords))
+	tr := imageSrc0UnsafeAt(clamp(sourceCoords + vec2(+halfPercent.x, -halfPercent.y), minCoords, maxCoords))
+	bl := imageSrc0UnsafeAt(clamp(sourceCoords + vec2(-halfPercent.x, +halfPercent.y), minCoords, maxCoords))
+	br := imageSrc0UnsafeAt(clamp(sourceCoords + vec2(+halfPercent.x, +halfPercent.y), minCoords, maxCoords))
 	delta  := min(fract(sourceCoords + vec2(+halfPercent.x, +halfPercent.y)), percent)/percent
 	delta   = smoothstep(vec2(0), vec2(1), delta)
 	top    := mix(tl, tr, delta.x)
